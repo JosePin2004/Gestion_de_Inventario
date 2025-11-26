@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Inventario - Tienda</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>📦 Gestión de Inventario</h1>
+                <p>Sistema de control de inventario para tu tienda</p>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navbar">
+            <button class="nav-btn active" data-section="dashboard">Panel de Control</button>
+            <button class="nav-btn" data-section="productos">Productos</button>
+            <button class="nav-btn" data-section="nuevo-producto">Agregar Producto</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <h2>Panel de Control</h2>
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <h3>Total de Productos</h3>
+                        <p class="stat-value" id="total-productos">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <h3>Cantidad Total</h3>
+                        <p class="stat-value" id="cantidad-total">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <h3>Valor Total</h3>
+                        <p class="stat-value" id="valor-total">$0.00</p>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #16a34a;">
+                        <div class="stat-icon">💹</div>
+                        <h3>Ganancia Total</h3>
+                        <p class="stat-value" id="ganancia-total" style="color: #16a34a;">$0.00</p>
+                    </div>
+                </div>
+
+                <div class="productos-bajo-stock">
+                    <h3>⚠️ Productos con Bajo Stock</h3>
+                    <ul id="bajo-stock-list"></ul>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                    <div class="productos-bajo-stock" style="border-left-color: #dc2626;">
+                        <h3 style="color: #dc2626;">⚫ Productos Caducados</h3>
+                        <ul id="caducados-list" style="list-style: none; padding: 0;"></ul>
+                    </div>
+
+                    <div class="productos-bajo-stock" style="border-left-color: #ea580c;">
+                        <h3 style="color: #ea580c;">🔴 Próximos a Caducar (Menos de 15 días)</h3>
+                        <ul id="proximos-caducar-list" style="list-style: none; padding: 0;"></ul>
+                    </div>
+                </div>
+
+                <!-- Resumen Mensual -->
+                <div style="margin-top: 3rem; padding: 2rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #2563eb;">
+                    <h3 style="color: #2563eb; margin-bottom: 1.5rem;">📅 Resumen del Mes Actual</h3>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                        <div style="padding: 1rem; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <p style="color: #666; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Costo Total de Compras</p>
+                            <p id="mes-costo-compras" style="font-size: 1.5rem; font-weight: bold; color: #ea580c; margin: 0;">$0.00</p>
+                        </div>
+                        <div style="padding: 1rem; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <p style="color: #666; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Ingresos Total de Ventas</p>
+                            <p id="mes-ingresos-ventas" style="font-size: 1.5rem; font-weight: bold; color: #2563eb; margin: 0;">$0.00</p>
+                        </div>
+                        <div style="padding: 1rem; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <p style="color: #666; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Ganancia Neta</p>
+                            <p id="mes-ganancia-neta" style="font-size: 1.5rem; font-weight: bold; color: #16a34a; margin: 0;">$0.00</p>
+                        </div>
+                        <div style="padding: 1rem; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <p style="color: #666; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Margen de Ganancia</p>
+                            <p id="mes-margen-ganancia" style="font-size: 1.5rem; font-weight: bold; color: #16a34a; margin: 0;">0%</p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <!-- Detalle de Compras -->
+                        <div style="padding: 1rem; background: white; border-radius: 6px;">
+                            <h4 style="color: #ea580c; margin-top: 0;">🛒 Compras del Mes</h4>
+                            <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid #ddd;">
+                                        <th style="text-align: left; padding: 0.5rem;">Producto</th>
+                                        <th style="text-align: right; padding: 0.5rem;">Cantidad</th>
+                                        <th style="text-align: right; padding: 0.5rem;">Costo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mes-compras-detalle" style="max-height: 200px; overflow-y: auto; display: block;">
+                                    <tr><td colspan="3" style="padding: 0.5rem; text-align: center; color: #999;">Sin compras este mes</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Detalle de Ventas -->
+                        <div style="padding: 1rem; background: white; border-radius: 6px;">
+                            <h4 style="color: #2563eb; margin-top: 0;">💰 Ventas del Mes</h4>
+                            <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid #ddd;">
+                                        <th style="text-align: left; padding: 0.5rem;">Producto</th>
+                                        <th style="text-align: right; padding: 0.5rem;">Unidades</th>
+                                        <th style="text-align: right; padding: 0.5rem;">Ganancia</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mes-ventas-detalle" style="max-height: 200px; overflow-y: auto; display: block;">
+                                    <tr><td colspan="3" style="padding: 0.5rem; text-align: center; color: #999;">Sin ventas este mes</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Productos Section -->
+            <section id="productos" class="section">
+                <h2>Listado de Productos</h2>
+                
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="Buscar producto..." class="search-input">
+                    <select id="categoria-filter" class="filter-select">
+                        <option value="">Todas las categorías</option>
+                    </select>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="productos-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Cantidad</th>
+                                <th>Precio Proveedor</th>
+                                <th>Precio Venta</th>
+                                <th>Ganancia/Unidad</th>
+                                <th>Contador Ventas</th>
+                                <th>Vencimiento</th>
+                                <th>Total Venta</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productos-tbody">
+                            <tr><td colspan="10" class="text-center">Cargando productos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Nuevo Producto Section -->
+            <section id="nuevo-producto" class="section">
+                <h2>Agregar Nuevo Producto</h2>
+                <form id="form-producto" class="form-container">
+                    <div class="form-group">
+                        <label for="nombre">Nombre del Producto *</label>
+                        <input type="text" id="nombre" required>
+                    </div>
+
+                    <div class="form-row">
+                    <div class="form-group">
+                        <label for="categoria">Categoría</label>
+                        <select id="categoria">
+                            <option value="">Seleccionar categoría...</option>
+                            <option value="Frutas y Verduras">Frutas y Verduras</option>
+                            <option value="Carnes y Aves">Carnes y Aves</option>
+                            <option value="Pescados y Mariscos">Pescados y Mariscos</option>
+                            <option value="Lácteos">Lácteos</option>
+                            <option value="Panificados">Panificados</option>
+                            <option value="Granos y Cereales">Granos y Cereales</option>
+                            <option value="Aceites y Condimentos">Aceites y Condimentos</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Snacks y Golosinas">Snacks y Golosinas</option>
+                            <option value="Congelados">Congelados</option>
+                            <option value="Higiene y Limpieza">Higiene y Limpieza</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion">Descripción</label>
+                    <textarea id="descripcion" rows="3"></textarea>
+                </div>                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cantidad">Cantidad *</label>
+                            <input type="number" id="cantidad" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="precio_proveedor">Precio Proveedor ($) *</label>
+                            <input type="number" id="precio_proveedor" required min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="precio_venta">Precio Venta ($) *</label>
+                            <input type="number" id="precio_venta" required min="0" step="0.01">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fecha_entrada">Fecha de Entrada</label>
+                            <input type="date" id="fecha_entrada">
+                        </div>
+                        <div class="form-group">
+                            <label for="fecha_vencimiento">Fecha de Caducidad</label>
+                            <input type="date" id="fecha_vencimiento">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Agregar Producto</button>
+                        <button type="reset" class="btn btn-secondary">Limpiar</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal para editar producto -->
+    <div id="modal-editar" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Editar Producto</h2>
+            <form id="form-editar-producto" class="form-container">
+                <input type="hidden" id="edit-id">
+                
+                <div class="form-group">
+                    <label for="edit-nombre">Nombre *</label>
+                    <input type="text" id="edit-nombre" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-categoria">Categoría</label>
+                        <select id="edit-categoria">
+                            <option value="">Seleccionar categoría...</option>
+                            <option value="Frutas y Verduras">Frutas y Verduras</option>
+                            <option value="Carnes y Aves">Carnes y Aves</option>
+                            <option value="Pescados y Mariscos">Pescados y Mariscos</option>
+                            <option value="Lácteos">Lácteos</option>
+                            <option value="Panificados">Panificados</option>
+                            <option value="Granos y Cereales">Granos y Cereales</option>
+                            <option value="Aceites y Condimentos">Aceites y Condimentos</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Snacks y Golosinas">Snacks y Golosinas</option>
+                            <option value="Congelados">Congelados</option>
+                            <option value="Higiene y Limpieza">Higiene y Limpieza</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-descripcion">Descripción</label>
+                    <textarea id="edit-descripcion" rows="3"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-cantidad">Cantidad *</label>
+                        <input type="number" id="edit-cantidad" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-precio_proveedor">Precio Proveedor ($) *</label>
+                        <input type="number" id="edit-precio_proveedor" required min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-precio_venta">Precio Venta ($) *</label>
+                        <input type="number" id="edit-precio_venta" required min="0" step="0.01">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-fecha_vencimiento">Fecha de Caducidad</label>
+                    <input type="date" id="edit-fecha_vencimiento">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-fecha_entrada">Fecha de Entrada</label>
+                    <input type="date" id="edit-fecha_entrada">
+                </div>
+
+                <div class="form-actions">
+                    <label for="fecha_entrada">Fecha de Entrada</label>
+                    <input type="date" id="fecha_entrada">
+                </div>
+
+                <div class="form-actions">
+                    <label for="fecha_vencimiento">Fecha de Vencimiento</label>
+                    <input type="date" id="fecha_vencimiento">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para movimientos -->
+    <div id="modal-movimientos" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modal-movimientos-titulo">Movimientos de Inventario</h2>
+            
+            <div class="form-group">
+                <label for="tipo-movimiento">Tipo de Movimiento *</label>
+                <select id="tipo-movimiento" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="entrada">Entrada (Compra/Devolución)</option>
+                    <option value="salida">Salida (Venta)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="cantidad-movimiento">Cantidad *</label>
+                <input type="number" id="cantidad-movimiento" required min="1">
+            </div>
+
+            <div class="form-group">
+                <label for="descripcion-movimiento">Descripción</label>
+                <textarea id="descripcion-movimiento" rows="2"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" onclick="guardarMovimiento()">Registrar Movimiento</button>
+                <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+            </div>
+
+            <h3 style="margin-top: 20px;">Historial de Movimientos</h3>
+            <div id="movimientos-list" class="movimientos-list"></div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Sistema de Gestión de Inventario. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
