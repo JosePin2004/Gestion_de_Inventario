@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Inventario - Autenticación</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a0a2e 50%, #0a0e27 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: #1a1f3a;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+            width: 100%;
+            max-width: 400px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .auth-header {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a0a2e 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .auth-header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .auth-header svg {
+            width: 70px;
+            height: 70px;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
+        }
+
+        .auth-header h1 {
+            font-size: 1.2rem;
+            letter-spacing: 3px;
+            margin-bottom: 0.5rem;
+            color: #00d4ff;
+            font-weight: 700;
+        }
+
+        .auth-header h2 {
+            font-size: 1.6rem;
+            margin-bottom: 0.5rem;
+            color: white;
+            font-weight: 600;
+        }
+
+        .auth-header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+            color: white;
+        }
+
+        .auth-content {
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #b0bec5;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid rgba(0, 212, 255, 0.2);
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: rgba(10, 14, 39, 0.5);
+            color: white;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            background: rgba(10, 14, 39, 0.8);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff 0%, #8f00ff 100%);
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        .toggle-form {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .toggle-form p {
+            color: #b0bec5;
+            margin-bottom: 0.5rem;
+        }
+
+        .toggle-btn {
+            color: #00d4ff;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .toggle-btn:hover {
+            text-decoration: underline;
+        }
+
+        .form-section h2 {
+            color: #00d4ff;
+            margin-bottom: 1.5rem;
+        }
+
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .success {
+            background: #efe;
+            color: #060;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .form-hidden {
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 1rem;
+            }
+
+            .auth-header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="auth-header">
+            <div class="auth-header-content">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#8f00ff;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <!-- Shield outline -->
+                    <path d="M 100 20 L 160 50 L 160 110 C 160 160 100 180 100 180 C 100 180 40 160 40 110 L 40 50 Z" fill="none" stroke="url(#logoGradient)" stroke-width="3" stroke-linejoin="round"/>
+                    <!-- Planet with ring -->
+                    <circle cx="100" cy="100" r="35" fill="url(#logoGradient)" opacity="0.9"/>
+                    <ellipse cx="100" cy="100" rx="50" ry="12" fill="none" stroke="url(#logoGradient)" stroke-width="2"/>
+                    <!-- X pattern inside -->
+                    <line x1="75" y1="75" x2="125" y2="125" stroke="white" stroke-width="2" opacity="0.9"/>
+                    <line x1="125" y1="75" x2="75" y2="125" stroke="white" stroke-width="2" opacity="0.9"/>
+                </svg>
+                <div>
+                    <h1 style="font-size: 1.2rem; letter-spacing: 3px; margin-bottom: 0.5rem;">NEXUS</h1>
+                    <h2>Gestor de Inventario</h2>
+                    <p>Control total de tus productos</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-content">
+            <!-- Formulario de Login -->
+            <div id="login-form" class="form-section">
+                <h2 style="margin-bottom: 1.5rem; color: #00d4ff;">Iniciar Sesión</h2>
+                
+                <div class="error" id="login-error"></div>
+                <div class="success" id="login-success"></div>
+
+                <form onsubmit="manejarLogin(event)">
+                    <div class="form-group">
+                        <label for="login-usuario">Usuario</label>
+                        <input type="text" id="login-usuario" placeholder="Tu usuario" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-contraseña">Contraseña</label>
+                        <input type="password" id="login-contraseña" placeholder="Tu contraseña" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                </form>
+
+                <div class="toggle-form">
+                    <p>¿No tienes cuenta?</p>
+                    <span class="toggle-btn" onclick="cambiarFormulario('registro')">Crear una nueva</span>
+                </div>
+            </div>
+
+            <!-- Formulario de Registro -->
+            <div id="register-form" class="form-section form-hidden">
+                <h2 style="margin-bottom: 1.5rem; color: #00d4ff;">Crear Cuenta</h2>
+                
+                <div class="error" id="registro-error"></div>
+                <div class="success" id="registro-success"></div>
+
+                <form onsubmit="manejarRegistro(event)">
+                    <div class="form-group">
+                        <label for="registro-usuario">Usuario</label>
+                        <input type="text" id="registro-usuario" placeholder="Elige un usuario" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registro-email">Email</label>
+                        <input type="email" id="registro-email" placeholder="Tu email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registro-contraseña">Contraseña</label>
+                        <input type="password" id="registro-contraseña" placeholder="Mínimo 6 caracteres" required minlength="6">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registro-contraseña-confirm">Confirmar Contraseña</label>
+                        <input type="password" id="registro-contraseña-confirm" placeholder="Confirma tu contraseña" required minlength="6">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Crear Cuenta</button>
+                </form>
+
+                <div class="toggle-form">
+                    <p>¿Ya tienes cuenta?</p>
+                    <span class="toggle-btn" onclick="cambiarFormulario('login')">Inicia sesión aquí</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+
+        function cambiarFormulario(formulario) {
+            document.getElementById('login-form').classList.toggle('form-hidden', formulario !== 'login');
+            document.getElementById('registro-form').classList.toggle('form-hidden', formulario !== 'registro');
+        }
+
+        async function manejarLogin(event) {
+            event.preventDefault();
+
+            const nombreUsuario = document.getElementById('login-usuario').value;
+            const contraseña = document.getElementById('login-contraseña').value;
+            const errorDiv = document.getElementById('login-error');
+            const successDiv = document.getElementById('login-success');
+
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nombreUsuario, contraseña })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error en el inicio de sesión');
+                }
+
+                // Guardar token en localStorage
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('usuarioId', data.usuarioId);
+                localStorage.setItem('nombreUsuario', data.nombreUsuario);
+                localStorage.setItem('esAdmin', data.esAdmin ? 'true' : 'false');
+
+                console.log('Login exitoso:', { 
+                    usuarioId: data.usuarioId, 
+                    nombreUsuario: data.nombreUsuario, 
+                    esAdmin: data.esAdmin 
+                });
+
+                successDiv.textContent = '✅ ' + data.mensaje;
+                successDiv.style.display = 'block';
+
+                // Redirigir según si es admin o no
+                const esAdmin = data.esAdmin === 1 || data.esAdmin === true || data.esAdmin === 'true';
+                console.log('esAdmin check:', { 
+                    valor: data.esAdmin, 
+                    esAdmin: esAdmin,
+                    tipo: typeof data.esAdmin
+                });
+                
+                if (esAdmin) {
+                    console.log('Redirigiendo a admin.html');
+                    window.location.href = 'admin.html';
+                } else {
+                    console.log('Redirigiendo a index.html');
+                    window.location.href = 'index.html';
+                }
+
+            } catch (error) {
+                errorDiv.textContent = '❌ ' + error.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        async function manejarRegistro(event) {
+            event.preventDefault();
+
+            const nombreUsuario = document.getElementById('registro-usuario').value;
+            const email = document.getElementById('registro-email').value;
+            const contraseña = document.getElementById('registro-contraseña').value;
+            const contraseñaConfirm = document.getElementById('registro-contraseña-confirm').value;
+            const errorDiv = document.getElementById('registro-error');
+            const successDiv = document.getElementById('registro-success');
+
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            if (contraseña !== contraseñaConfirm) {
+                errorDiv.textContent = '❌ Las contraseñas no coinciden';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/auth/registro`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nombreUsuario, email, contraseña })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error en el registro');
+                }
+
+                // Guardar token en localStorage
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('usuarioId', data.usuarioId);
+                localStorage.setItem('nombreUsuario', nombreUsuario);
+                localStorage.setItem('esAdmin', data.esAdmin ? 'true' : 'false');
+
+                console.log('Registro exitoso:', { 
+                    usuarioId: data.usuarioId, 
+                    nombreUsuario: nombreUsuario, 
+                    esAdmin: data.esAdmin 
+                });
+
+                successDiv.textContent = '✅ ' + data.mensaje;
+                successDiv.style.display = 'block';
+
+                // Redirigir al inventario
+                console.log('Redirigiendo a index.html después del registro');
+                window.location.href = 'index.html';
+
+            } catch (error) {
+                errorDiv.textContent = '❌ ' + error.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

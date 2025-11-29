@@ -11,16 +11,32 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>📦 Gestión de Inventario</h1>
-                <p>Sistema de control de inventario para tu tienda</p>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <img src="logo.svg" alt="NEXUS Logo" style="width: 60px; height: 60px; filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                            <h1 style="margin: 0; font-size: 1.2rem; letter-spacing: 2px; color: #00d4ff;">NEXUS</h1>
+                        </div>
+                        <h2 style="margin: 0 0 0.25rem 0; font-size: 1.3rem;">📦 Gestión de Inventario</h2>
+                        <p style="margin: 0;">Sistema de control de inventario para tu tienda</p>
+                    </div>
+                </div>
             </div>
         </header>
 
         <!-- Navigation -->
         <nav class="navbar">
-            <button class="nav-btn active" data-section="dashboard">Panel de Control</button>
-            <button class="nav-btn" data-section="productos">Productos</button>
-            <button class="nav-btn" data-section="nuevo-producto">Agregar Producto</button>
+            <div class="nav-left">
+                <button class="nav-btn active" data-section="dashboard">Panel de Control</button>
+                <button class="nav-btn" data-section="productos">Productos</button>
+                <button class="nav-btn" data-section="nuevo-producto">Agregar Producto</button>
+                <button class="nav-btn" data-section="reportes">Reportes</button>
+            </div>
+            <div class="nav-right">
+                <span id="usuario-actual" class="usuario-info"></span>
+                <button id="admin-btn" class="nav-btn" style="background: #f59e0b; color: white; display: none; margin: 0 0.5rem;" onclick="irAlAdmin()">⚙️ Admin</button>
+                <button id="logout-btn" class="nav-btn logout-btn">Cerrar Sesión</button>
+            </div>
         </nav>
 
         <!-- Main Content -->
@@ -51,6 +67,8 @@
                     </div>
                 </div>
 
+                <button id="btn-datos-prueba" style="background: linear-gradient(90deg, #00d4ff, #8f00ff); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; margin-top: 1.5rem; display: none;">📊 Cargar Datos de Prueba</button>
+
                 <div class="productos-bajo-stock">
                     <h3>⚠️ Productos con Bajo Stock</h3>
                     <ul id="bajo-stock-list"></ul>
@@ -69,59 +87,59 @@
                 </div>
 
                 <!-- Resumen Mensual -->
-                <div style="margin-top: 3rem; padding: 2rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #2563eb;">
-                    <h3 style="color: #2563eb; margin-bottom: 1.5rem;">📅 Resumen del Mes Actual</h3>
+                <div style="margin-top: 3rem; padding: 2rem; background: linear-gradient(135deg, rgba(26, 31, 58, 0.8) 0%, rgba(26, 10, 46, 0.8) 100%); border-radius: 8px; border-left: 4px solid #00d4ff; border: 1px solid rgba(0, 212, 255, 0.2); box-shadow: 0 0 15px rgba(0, 212, 255, 0.1);">
+                    <h3 style="color: #00d4ff; margin-bottom: 1.5rem; text-shadow: 0 0 10px rgba(0, 212, 255, 0.2);">📅 Resumen del Mes Actual</h3>
                     
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                        <div style="padding: 1rem; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                            <p style="color: #666; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Costo Total de Compras</p>
+                        <div style="padding: 1rem; background: rgba(10, 14, 39, 0.8); border-radius: 6px; box-shadow: 0 0 10px rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.15);">
+                            <p style="color: #b0bec5; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Costo Total de Compras</p>
                             <p id="mes-costo-compras" style="font-size: 1.5rem; font-weight: bold; color: #ea580c; margin: 0;">$0.00</p>
                         </div>
-                        <div style="padding: 1rem; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                            <p style="color: #666; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Ingresos Total de Ventas</p>
-                            <p id="mes-ingresos-ventas" style="font-size: 1.5rem; font-weight: bold; color: #2563eb; margin: 0;">$0.00</p>
+                        <div style="padding: 1rem; background: rgba(10, 14, 39, 0.8); border-radius: 6px; box-shadow: 0 0 10px rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.15);">
+                            <p style="color: #b0bec5; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Ingresos Total de Ventas</p>
+                            <p id="mes-ingresos-ventas" style="font-size: 1.5rem; font-weight: bold; color: #00d4ff; margin: 0;">$0.00</p>
                         </div>
-                        <div style="padding: 1rem; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                            <p style="color: #666; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Ganancia Neta</p>
+                        <div style="padding: 1rem; background: rgba(10, 14, 39, 0.8); border-radius: 6px; box-shadow: 0 0 10px rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.15);">
+                            <p style="color: #b0bec5; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Ganancia Neta</p>
                             <p id="mes-ganancia-neta" style="font-size: 1.5rem; font-weight: bold; color: #16a34a; margin: 0;">$0.00</p>
                         </div>
-                        <div style="padding: 1rem; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                            <p style="color: #666; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Margen de Ganancia</p>
+                        <div style="padding: 1rem; background: rgba(10, 14, 39, 0.8); border-radius: 6px; box-shadow: 0 0 10px rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.15);">
+                            <p style="color: #b0bec5; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Margen de Ganancia</p>
                             <p id="mes-margen-ganancia" style="font-size: 1.5rem; font-weight: bold; color: #16a34a; margin: 0;">0%</p>
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                         <!-- Detalle de Compras -->
-                        <div style="padding: 1rem; background: white; border-radius: 6px;">
+                        <div style="padding: 1rem; background: rgba(10, 14, 39, 0.6); border-radius: 6px; border: 1px solid rgba(0, 212, 255, 0.15);">
                             <h4 style="color: #ea580c; margin-top: 0;">🛒 Compras del Mes</h4>
                             <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
                                 <thead>
-                                    <tr style="border-bottom: 2px solid #ddd;">
-                                        <th style="text-align: left; padding: 0.5rem;">Producto</th>
-                                        <th style="text-align: right; padding: 0.5rem;">Cantidad</th>
-                                        <th style="text-align: right; padding: 0.5rem;">Costo</th>
+                                    <tr style="border-bottom: 1px solid rgba(0, 212, 255, 0.1);">
+                                        <th style="text-align: left; padding: 0.5rem; color: #b0bec5;">Producto</th>
+                                        <th style="text-align: right; padding: 0.5rem; color: #b0bec5;">Cantidad</th>
+                                        <th style="text-align: right; padding: 0.5rem; color: #b0bec5;">Costo</th>
                                     </tr>
                                 </thead>
-                                <tbody id="mes-compras-detalle" style="max-height: 200px; overflow-y: auto; display: block;">
-                                    <tr><td colspan="3" style="padding: 0.5rem; text-align: center; color: #999;">Sin compras este mes</td></tr>
+                                <tbody id="mes-compras-detalle" style="max-height: 200px; overflow-y: auto;">
+                                    <tr><td colspan="3" style="padding: 0.5rem; text-align: center; color: #666;">Sin compras este mes</td></tr>
                                 </tbody>
                             </table>
                         </div>
 
                         <!-- Detalle de Ventas -->
-                        <div style="padding: 1rem; background: white; border-radius: 6px;">
-                            <h4 style="color: #2563eb; margin-top: 0;">💰 Ventas del Mes</h4>
+                        <div style="padding: 1rem; background: rgba(10, 14, 39, 0.6); border-radius: 6px; border: 1px solid rgba(0, 212, 255, 0.15);">
+                            <h4 style="color: #00d4ff; margin-top: 0;">💰 Ventas del Mes</h4>
                             <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
                                 <thead>
-                                    <tr style="border-bottom: 2px solid #ddd;">
-                                        <th style="text-align: left; padding: 0.5rem;">Producto</th>
-                                        <th style="text-align: right; padding: 0.5rem;">Unidades</th>
-                                        <th style="text-align: right; padding: 0.5rem;">Ganancia</th>
+                                    <tr style="border-bottom: 1px solid rgba(0, 212, 255, 0.1);">
+                                        <th style="text-align: left; padding: 0.5rem; color: #b0bec5;">Producto</th>
+                                        <th style="text-align: right; padding: 0.5rem; color: #b0bec5;">Unidades</th>
+                                        <th style="text-align: right; padding: 0.5rem; color: #b0bec5;">Ganancia</th>
                                     </tr>
                                 </thead>
-                                <tbody id="mes-ventas-detalle" style="max-height: 200px; overflow-y: auto; display: block;">
-                                    <tr><td colspan="3" style="padding: 0.5rem; text-align: center; color: #999;">Sin ventas este mes</td></tr>
+                                <tbody id="mes-ventas-detalle" style="max-height: 200px; overflow-y: auto;">
+                                    <tr><td colspan="3" style="padding: 0.5rem; text-align: center; color: #666;">Sin ventas este mes</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -227,6 +245,64 @@
                         <button type="reset" class="btn btn-secondary">Limpiar</button>
                     </div>
                 </form>
+            </section>
+
+            <!-- Reportes Section -->
+            <section id="reportes" class="section">
+                <h2 style="color: #00d4ff; text-shadow: 0 0 10px rgba(0, 212, 255, 0.2);">📊 Reportes Mensuales y Anuales</h2>
+                
+                <div style="margin-bottom: 2rem; padding: 1rem; background: linear-gradient(135deg, rgba(26, 31, 58, 0.8) 0%, rgba(26, 10, 46, 0.8) 100%); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 4px; box-shadow: 0 0 15px rgba(0, 212, 255, 0.1);">
+                    <label for="year-selector" style="font-weight: bold; margin-right: 1rem; color: #b0bec5;">Seleccionar Año:</label>
+                    <select id="year-selector" style="padding: 0.75rem; border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; font-size: 1rem; background: rgba(10, 14, 39, 0.8); color: #ffffff;">
+                        <option value="">Cargando años...</option>
+                    </select>
+                </div>
+
+                <!-- Resumen Anual -->
+                <div style="padding: 2rem; background: linear-gradient(135deg, rgba(26, 31, 58, 0.8) 0%, rgba(26, 10, 46, 0.8) 100%); border-radius: 8px; border: 1px solid rgba(0, 212, 255, 0.2); margin-bottom: 2rem; box-shadow: 0 0 15px rgba(0, 212, 255, 0.1);">
+                    <h3 style="color: #00d4ff; margin-top: 0; text-shadow: 0 0 10px rgba(0, 212, 255, 0.2);">📈 Resumen Anual</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div style="padding: 1rem; background: rgba(10, 14, 39, 0.8); border-radius: 6px; box-shadow: 0 0 10px rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.15);">
+                            <p style="color: #b0bec5; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Compras Anuales</p>
+                            <p id="annual-compras" style="font-size: 1.5rem; font-weight: bold; color: #ea580c; margin: 0;">$0.00</p>
+                        </div>
+                        <div style="padding: 1rem; background: rgba(10, 14, 39, 0.8); border-radius: 6px; box-shadow: 0 0 10px rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.15);">
+                            <p style="color: #b0bec5; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Ventas Anuales</p>
+                            <p id="annual-ventas" style="font-size: 1.5rem; font-weight: bold; color: #00d4ff; margin: 0;">$0.00</p>
+                        </div>
+                        <div style="padding: 1rem; background: rgba(10, 14, 39, 0.8); border-radius: 6px; box-shadow: 0 0 10px rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.15);">
+                            <p style="color: #b0bec5; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Ganancia Anual</p>
+                            <p id="annual-ganancia" style="font-size: 1.5rem; font-weight: bold; color: #16a34a; margin: 0;">$0.00</p>
+                        </div>
+                        <div style="padding: 1rem; background: rgba(10, 14, 39, 0.8); border-radius: 6px; box-shadow: 0 0 10px rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.15);">
+                            <p style="color: #b0bec5; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Margen Anual</p>
+                            <p id="annual-margen" style="font-size: 1.5rem; font-weight: bold; color: #16a34a; margin: 0;">0%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Reportes Mensuales -->
+                <div style="padding: 2rem; background: linear-gradient(135deg, rgba(26, 31, 58, 0.8) 0%, rgba(26, 10, 46, 0.8) 100%); border-radius: 8px; box-shadow: 0 0 15px rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.2);">
+                    <h3 style="color: #00d4ff; margin-top: 0; text-shadow: 0 0 10px rgba(0, 212, 255, 0.2);">📅 Detalle Mensual</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: rgba(0, 212, 255, 0.1); border-bottom: 1px solid rgba(0, 212, 255, 0.2);">
+                                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid rgba(0, 212, 255, 0.3); font-weight: 600; color: #00d4ff;">Mes</th>
+                                    <th style="padding: 1rem; text-align: right; border-bottom: 2px solid rgba(0, 212, 255, 0.3); font-weight: 600; color: #00d4ff;">Compras</th>
+                                    <th style="padding: 1rem; text-align: right; border-bottom: 2px solid rgba(0, 212, 255, 0.3); font-weight: 600; color: #00d4ff;">Ventas</th>
+                                    <th style="padding: 1rem; text-align: right; border-bottom: 2px solid rgba(0, 212, 255, 0.3); font-weight: 600; color: #00d4ff;">Ganancia</th>
+                                    <th style="padding: 1rem; text-align: right; border-bottom: 2px solid rgba(0, 212, 255, 0.3); font-weight: 600; color: #00d4ff;">Margen %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monthly-report-table">
+                                <tr style="text-align: center; color: #b0bec5;">
+                                    <td colspan="5" style="padding: 2rem;">Selecciona un año para ver el detalle mensual</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
@@ -352,6 +428,7 @@
         <p>&copy; 2025 Sistema de Gestión de Inventario. Todos los derechos reservados.</p>
     </footer>
 
+    <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

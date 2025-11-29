@@ -1,0 +1,31 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield background -->
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8f00ff;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8f00ff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Shield outline -->
+  <path d="M 100 20 L 160 50 L 160 110 Q 100 160 100 160 Q 100 160 40 110 L 40 50 Z" 
+        fill="none" stroke="url(#logoGradient)" stroke-width="2" stroke-linejoin="round"/>
+  
+  <!-- Planet/Circle with ring -->
+  <circle cx="100" cy="95" r="35" fill="none" stroke="url(#logoGradient)" stroke-width="2"/>
+  
+  <!-- Ring around planet -->
+  <ellipse cx="100" cy="95" rx="45" ry="15" fill="none" stroke="url(#logoGradient)" stroke-width="2" 
+           transform="rotate(-25 100 95)"/>
+  
+  <!-- X pattern for NEXUS -->
+  <g stroke="url(#textGradient)" stroke-width="3" stroke-linecap="round">
+    <line x1="70" y1="65" x2="130" y2="125"/>
+    <line x1="130" y1="65" x2="70" y2="125"/>
+  </g>
+</svg>

@@ -1,6 +1,52 @@
-// API Base URL
-const API_URL = 'http://localhost:3000/api';
+// API Base URL - usar window para evitar conflictos
+window.API_URL = window.API_URL || 'http://localhost:3000/api';
 let productoActualEnMovimiento = null;
+
+// Función para realizar llamadas API con autenticación
+async function llamadaAPILocal(endpoint, metodo = 'GET', datos = null) {
+    const token = obtenerToken();
+    
+    if (!token) {
+        console.error('No hay token. El usuario debe estar autenticado.');
+        cerrarSesion();
+        return null;
+    }
+
+    const opciones = {
+        method: metodo,
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    };
+
+    if (datos && (metodo === 'POST' || metodo === 'PUT')) {
+        opciones.body = JSON.stringify(datos);
+    }
+
+    try {
+        const response = await fetch(`${window.API_URL}${endpoint}`, opciones);
+
+        // Si el token expiró o es inválido
+        if (response.status === 401) {
+            console.warn('Token inválido o expirado. Redirigiendo al login.');
+            cerrarSesion();
+            return null;
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        return await response.json();
+
+    } catch (error) {
+        console.error('Error en la petición API:', error);
+        alert('Error: ' + error.message);
+        throw error;
+    }
+}
 
 // Función para calcular estado de vencimiento
 function calcularEstadoVencimiento(fechaVencimiento) {
@@ -27,21 +73,68 @@ function calcularEstadoVencimiento(fechaVencimiento) {
 
 // Inicializar aplicación
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Página cargada, verificando autenticación...');
+    
+    // Verificar que el usuario esté autenticado
+    verificarAutenticacion();
+    
+    // Actualizar UI del usuario
+    actualizarUIUsuario();
+    
+    // Inicializar eventos
+    inicializarEventos();
+    
+    // Agregar event listener al year-selector
+    agregarEventoAñoSelector();
+    
+    // Cargar datos
     cargarProductos();
     cargarResumen();
-    inicializarEventos();
+    
     // Cargar resumen cada 5 segundos
     setInterval(cargarResumen, 5000);
+    
+    // Mostrar botón de datos de prueba si es admin
+    if (esAdmin()) {
+        const btnDatosPrueba = document.getElementById('btn-datos-prueba');
+        if (btnDatosPrueba) {
+            btnDatosPrueba.style.display = 'inline-block';
+            btnDatosPrueba.addEventListener('click', cargarDatosPrueba);
+        }
+    }
+    
+    console.log('Aplicación inicializada correctamente');
 });
 
 // Inicializar eventos
 function inicializarEventos() {
     // Navegación
     document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            cambiarSeccion(e.target.dataset.section);
-        });
+        if (btn.id !== 'admin-btn' && btn.id !== 'logout-btn') {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const seccion = this.getAttribute('data-section');
+                console.log('Botón clickeado:', { id: this.id, seccion: seccion });
+                cambiarSeccion(seccion);
+            });
+        }
     });
+
+    // Mostrar botón admin si es administrador
+    // Mostrar botón admin si es administrador
+    if (esAdmin()) {
+        document.getElementById('admin-btn').style.display = 'block';
+    }
+
+    // Event listener para logout
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('¿Deseas cerrar sesión?')) {
+                cerrarSesion();
+            }
+        });
+    }
 
     // Formulario de nuevo producto
     document.getElementById('form-producto').addEventListener('submit', agregarProducto);
@@ -72,9 +165,17 @@ function inicializarEventos() {
 
 // Cambiar sección activa
 function cambiarSeccion(seccion) {
+    if (!seccion) {
+        console.error('No se especificó sección');
+        return;
+    }
+    
+    console.log('Cambiando a sección:', seccion);
+    
     // Desactivar todas las secciones
     document.querySelectorAll('.section').forEach(s => {
         s.classList.remove('active');
+        console.log('Removiendo active de:', s.id);
     });
 
     // Desactivar todos los botones nav
@@ -83,20 +184,35 @@ function cambiarSeccion(seccion) {
     });
 
     // Activar sección y botón seleccionados
-    document.getElementById(seccion).classList.add('active');
-    document.querySelector(`[data-section="${seccion}"]`).classList.add('active');
+    const seccionElement = document.getElementById(seccion);
+    if (!seccionElement) {
+        console.error('Sección no encontrada:', seccion);
+        return;
+    }
+    
+    seccionElement.classList.add('active');
+    console.log('Clase active agregada a sección:', seccion);
+    
+    const btnElement = document.querySelector(`[data-section="${seccion}"]`);
+    if (btnElement) {
+        btnElement.classList.add('active');
+    }
 
     // Recargar datos si es necesario
     if (seccion === 'productos') {
+        console.log('Cargando productos...');
         cargarProductos();
+    } else if (seccion === 'reportes') {
+        console.log('Cargando reportes...');
+        cargarAnosDisponibles();
     }
 }
 
 // Cargar productos
 async function cargarProductos() {
     try {
-        const response = await fetch(`${API_URL}/productos`);
-        const productos = await response.json();
+        const productos = await llamadaAPILocal('/productos');
+        if (!productos) return;
 
         // Actualizar tabla
         const tbody = document.getElementById('productos-tbody');
@@ -169,11 +285,10 @@ async function cargarProductos() {
 // Cargar resumen
 async function cargarResumen() {
     try {
-        const response = await fetch(`${API_URL}/productos`);
-        const productos = await response.json();
-
-        const resumenResponse = await fetch(`${API_URL}/resumen`);
-        const resumen = await resumenResponse.json();
+        const productos = await llamadaAPILocal('/productos');
+        if (!productos) return;
+        const resumen = await llamadaAPILocal('/resumen');
+        if (!resumen) return;
 
         document.getElementById('total-productos').textContent = resumen.total_productos || 0;
         document.getElementById('cantidad-total').textContent = resumen.cantidad_total || 0;
@@ -193,20 +308,67 @@ async function cargarResumen() {
     }
 }
 
+// Cargar datos de prueba
+async function cargarDatosPrueba() {
+    const btn = document.getElementById('btn-datos-prueba');
+    const textoOriginal = btn.textContent;
+    
+    try {
+        btn.disabled = true;
+        btn.textContent = '⏳ Cargando datos...';
+        
+        const respuesta = await llamadaAPILocal('/datos-prueba', 'POST', {});
+        
+        console.log('Datos de prueba insertados:', respuesta);
+        
+        // Esperar un segundo y recargar datos
+        setTimeout(() => {
+            cargarResumen();
+            btn.disabled = false;
+            btn.textContent = '✓ Datos cargados!';
+            
+            setTimeout(() => {
+                btn.textContent = textoOriginal;
+            }, 3000);
+        }, 1500);
+    } catch (error) {
+        console.error('Error cargando datos de prueba:', error);
+        btn.disabled = false;
+        btn.textContent = textoOriginal;
+    }
+}
+
 // Cargar resumen mensual
 async function cargarResumenMensual() {
     try {
-        const response = await fetch(`${API_URL}/resumen-mensual`);
-        const datos = await response.json();
+        const datos = await llamadaAPILocal('/resumen-mensual');
+        if (!datos) {
+            console.error('No hay datos del resumen mensual');
+            return;
+        }
+
+        console.log('Datos del resumen mensual:', datos);
 
         // Actualizar totales mensuales
-        document.getElementById('mes-costo-compras').textContent = `$${(datos.comparativa.costo_compras || 0).toFixed(2)}`;
-        document.getElementById('mes-ingresos-ventas').textContent = `$${(datos.comparativa.ingresos_ventas || 0).toFixed(2)}`;
-        document.getElementById('mes-ganancia-neta').textContent = `$${(datos.comparativa.ganancia_neta || 0).toFixed(2)}`;
-        document.getElementById('mes-margen-ganancia').textContent = `${datos.comparativa.margen_ganancia_porcentaje}%`;
+        if (datos.comparativa) {
+            const elem1 = document.getElementById('mes-costo-compras');
+            const elem2 = document.getElementById('mes-ingresos-ventas');
+            const elem3 = document.getElementById('mes-ganancia-neta');
+            const elem4 = document.getElementById('mes-margen-ganancia');
+            
+            if (elem1) elem1.textContent = `$${(datos.comparativa.costo_compras || 0).toFixed(2)}`;
+            if (elem2) elem2.textContent = `$${(datos.comparativa.ingresos_ventas || 0).toFixed(2)}`;
+            if (elem3) elem3.textContent = `$${(datos.comparativa.ganancia_neta || 0).toFixed(2)}`;
+            if (elem4) elem4.textContent = `${datos.comparativa.margen_ganancia_porcentaje}%`;
+            
+            console.log('Elementos actualizados correctamente');
+        } else {
+            console.error('No se encontró objeto comparativa en datos:', datos);
+        }
 
         // Llenar tabla de compras
         const comprasTable = document.getElementById('mes-compras-detalle');
+        console.log('Compras detalle:', datos.compras.detalle);
         if (datos.compras.detalle.length === 0) {
             comprasTable.innerHTML = '<tr><td colspan="3" style="padding: 0.5rem; text-align: center; color: #999;">Sin compras este mes</td></tr>';
         } else {
@@ -234,6 +396,7 @@ async function cargarResumenMensual() {
         }
     } catch (error) {
         console.error('Error cargando resumen mensual:', error);
+        console.error('Stack:', error.stack);
     }
 }
 
@@ -369,21 +532,15 @@ async function agregarProducto(e) {
     };
 
     try {
-        const response = await fetch(`${API_URL}/productos`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(producto)
-        });
-
-        if (response.ok) {
+        const response = await llamadaAPILocal('/productos', 'POST', producto);
+        if (response && response.id) {
             mostrarMensaje('Producto agregado exitosamente', 'success');
             document.getElementById('form-producto').reset();
             await cargarProductos();
             await cargarResumen();
             cambiarSeccion('productos');
         } else {
-            const error = await response.json();
-            mostrarMensaje(error.error || 'Error al agregar producto', 'error');
+            mostrarMensaje('Error al agregar producto', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
@@ -394,8 +551,8 @@ async function agregarProducto(e) {
 // Abrir modal para editar
 async function abrirEditar(id) {
     try {
-        const response = await fetch(`${API_URL}/productos/${id}`);
-        const producto = await response.json();
+        const producto = await llamadaAPILocal(`/productos/${id}`);
+        if (!producto) return;
 
         document.getElementById('edit-id').value = producto.id;
         document.getElementById('edit-nombre').value = producto.nombre;
@@ -431,20 +588,14 @@ async function guardarProductoEditado(e) {
     };
 
     try {
-        const response = await fetch(`${API_URL}/productos/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(producto)
-        });
-
-        if (response.ok) {
+        const response = await llamadaAPILocal(`/productos/${id}`, 'PUT', producto);
+        if (response) {
             mostrarMensaje('Producto actualizado exitosamente', 'success');
             cerrarModal();
             cargarProductos();
             cargarResumen();
         } else {
-            const error = await response.json();
-            mostrarMensaje(error.error || 'Error al actualizar', 'error');
+            mostrarMensaje('Error al actualizar', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
@@ -459,17 +610,13 @@ async function eliminarProducto(id) {
     }
 
     try {
-        const response = await fetch(`${API_URL}/productos/${id}`, {
-            method: 'DELETE'
-        });
-
-        if (response.ok) {
+        const response = await llamadaAPILocal(`/productos/${id}`, 'DELETE');
+        if (response) {
             mostrarMensaje('Producto eliminado exitosamente', 'success');
             cargarProductos();
             cargarResumen();
         } else {
-            const error = await response.json();
-            mostrarMensaje(error.error || 'Error al eliminar', 'error');
+            mostrarMensaje('Error al eliminar', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
@@ -501,8 +648,8 @@ async function abrirMovimientos(productoId, nombreProducto, caducado = false) {
 // Cargar historial de movimientos
 async function cargarHistorialMovimientos(productoId) {
     try {
-        const response = await fetch(`${API_URL}/movimientos/${productoId}`);
-        const movimientos = await response.json();
+        const movimientos = await llamadaAPILocal(`/movimientos/${productoId}`);
+        if (!movimientos) return;
 
         const list = document.getElementById('movimientos-list');
         list.innerHTML = '';
@@ -546,18 +693,13 @@ async function guardarMovimiento() {
     }
 
     try {
-        const response = await fetch(`${API_URL}/movimientos`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                producto_id: productoActualEnMovimiento,
-                tipo: tipo,
-                cantidad: cantidad,
-                descripcion: descripcion
-            })
+        const response = await llamadaAPILocal('/movimientos', 'POST', {
+            producto_id: productoActualEnMovimiento,
+            tipo: tipo,
+            cantidad: cantidad,
+            descripcion: descripcion
         });
-
-        if (response.ok) {
+        if (response) {
             mostrarMensaje('Movimiento registrado exitosamente', 'success');
             document.getElementById('cantidad-movimiento').value = '';
             document.getElementById('descripcion-movimiento').value = '';
@@ -565,8 +707,7 @@ async function guardarMovimiento() {
             cargarProductos();
             cargarResumen();
         } else {
-            const error = await response.json();
-            mostrarMensaje(error.error || 'Error al registrar movimiento', 'error');
+            mostrarMensaje('Error al registrar movimiento', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
@@ -614,4 +755,109 @@ function mostrarMensaje(mensaje, tipo = 'info') {
     
     // Remover después de 3 segundos
     setTimeout(() => alert.remove(), 3000);
+}
+
+// ==================== REPORTES ====================
+
+// Cargar años disponibles para el selector
+async function cargarAnosDisponibles() {
+    console.log('Iniciando cargarAnosDisponibles...');
+    try {
+        console.log(`Llamando a /anos-disponibles`);
+        const anos = await llamadaAPILocal('/anos-disponibles');
+        if (!anos) return;
+        console.log('Años disponibles:', anos);
+        
+        const selector = document.getElementById('year-selector');
+        if (!selector) {
+            console.error('No se encontró el selector #year-selector');
+            return;
+        }
+        
+        selector.innerHTML = '';
+        
+        if (anos.length === 0) {
+            selector.innerHTML = '<option value="">Sin datos disponibles</option>';
+            return;
+        }
+        
+        anos.forEach(ano => {
+            const option = document.createElement('option');
+            option.value = ano;
+            option.textContent = ano;
+            selector.appendChild(option);
+        });
+        
+        // Seleccionar el año actual por defecto
+        const anoActual = new Date().getFullYear();
+        selector.value = anoActual;
+        
+        // Cargar reportes del año seleccionado
+        cargarReportes();
+    } catch (error) {
+        console.error('Error cargando años disponibles:', error);
+    }
+}
+
+// Cargar reportes del año seleccionado
+async function cargarReportes() {
+    const anoSeleccionado = document.getElementById('year-selector').value;
+    console.log('Año seleccionado para cargar reportes:', anoSeleccionado);
+    
+    if (!anoSeleccionado) {
+        document.getElementById('monthly-report-table').innerHTML = 
+            '<tr style="text-align: center; color: #999;"><td colspan="5" style="padding: 2rem;">Selecciona un año para ver el detalle mensual</td></tr>';
+        return;
+    }
+    
+    try {
+        console.log(`Llamando a /reportes/${anoSeleccionado}`);
+        const datos = await llamadaAPILocal(`/reportes/${anoSeleccionado}`);
+        if (!datos) return;
+        console.log('Datos del reporte:', datos);
+        
+        // Actualizar resumen anual
+        document.getElementById('annual-compras').textContent = `$${(datos.anual.costo_compras || 0).toFixed(2)}`;
+        document.getElementById('annual-ventas').textContent = `$${(datos.anual.ingresos_ventas || 0).toFixed(2)}`;
+        document.getElementById('annual-ganancia').textContent = `$${(datos.anual.ganancia_neta || 0).toFixed(2)}`;
+        document.getElementById('annual-margen').textContent = `${datos.anual.margen_ganancia_porcentaje}%`;
+        
+        // Actualizar tabla mensual
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        
+        let filas = '';
+        datos.mensual.forEach((mes, index) => {
+            const margen = mes.ingresos_ventas > 0 ? ((mes.ganancia_neta / mes.ingresos_ventas) * 100).toFixed(2) : '0';
+            filas += `
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 1rem; font-weight: 500;">${meses[index]}</td>
+                    <td style="padding: 1rem; text-align: right;">$${(mes.costo_compras || 0).toFixed(2)}</td>
+                    <td style="padding: 1rem; text-align: right;">$${(mes.ingresos_ventas || 0).toFixed(2)}</td>
+                    <td style="padding: 1rem; text-align: right; color: #16a34a; font-weight: bold;">$${(mes.ganancia_neta || 0).toFixed(2)}</td>
+                    <td style="padding: 1rem; text-align: right; color: #16a34a;">${margen}%</td>
+                </tr>
+            `;
+        });
+        
+        document.getElementById('monthly-report-table').innerHTML = filas;
+    } catch (error) {
+        console.error('Error cargando reportes:', error);
+        console.error('Stack:', error.stack);
+        mostrarMensaje('Error al cargar los reportes: ' + error.message, 'error');
+    }
+}
+
+// Agregar event listener para cambio de año después de cargar
+function agregarEventoAñoSelector() {
+    const yearSelector = document.getElementById('year-selector');
+    if (yearSelector) {
+        yearSelector.addEventListener('change', cargarReportes);
+        console.log('Event listener agregado al year-selector');
+    }
+}
+
+// Función para ir al panel de administración
+function irAlAdmin() {
+    window.location.href = 'admin.html';
 }

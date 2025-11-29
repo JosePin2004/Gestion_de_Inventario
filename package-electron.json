@@ -1,0 +1,83 @@
+{
+  "name": "gestion-inventario",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Inventario",
+  "main": "main.js",
+  "homepage": "./",
+  "scripts": {
+    "react-start": "react-scripts start",
+    "react-build": "react-scripts build",
+    "react-test": "react-scripts test",
+    "react-eject": "react-scripts eject",
+    "electron-start": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-dev": "concurrently \"node server.js\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-build": "npm run react-build && electron-builder",
+    "build": "npm run electron-build",
+    "start": "node server.js"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "concurrently": "^7.0.0",
+    "electron": "^latest",
+    "electron-builder": "^latest",
+    "wait-on": "^6.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "sqlite3": "^5.1.6",
+    "path": "^0.12.7"
+  },
+  "build": {
+    "appId": "com.inventario.app",
+    "productName": "Gestión de Inventario",
+    "files": [
+      "build/**/*",
+      "Public/**/*",
+      "server.js",
+      "inventario.db",
+      "main.js",
+      "node_modules/**/*"
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
