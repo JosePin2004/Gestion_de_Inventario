@@ -758,6 +758,55 @@ app.get('/api/resumen', verificarToken, (req, res) => {
   );
 });
 
+// Resumen público (para el chatbot)
+app.get('/api/resumen-publico', (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+
+  dbUsers.get('SELECT id FROM sesiones WHERE token = ?', [token], (err, row) => {
+    if (err || !row) {
+      return res.status(401).json({ error: 'Token inválido' });
+    }
+
+    const usuarioId = row.id;
+    const dbUsuario = obtenerDBUsuario(usuarioId);
+    
+    dbUsuario.get(
+      `SELECT 
+        COUNT(*) as total_productos,
+        SUM(cantidad) as cantidad_total,
+        SUM(cantidad * precio_venta) as valor_total
+       FROM productos`,
+      (err, row) => {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        
+        // Obtener ganancia total de las ventas realizadas
+        dbUsuario.get(
+          `SELECT SUM(ganancia_total) as ganancia_total FROM ventas_ganancias`,
+          (err, ganancias) => {
+            if (err) {
+              return res.status(500).json({ error: err.message });
+            }
+            
+            const resumen = {
+              total_productos: row.total_productos || 0,
+              cantidad_total: row.cantidad_total || 0,
+              valor_total: row.valor_total || 0,
+              ganancia_total: ganancias.ganancia_total || 0
+            };
+            
+            res.json(resumen);
+          }
+        );
+      }
+    );
+  });
+});
+
 // Obtener resumen del mes actual
 app.get('/api/resumen-mensual', verificarToken, (req, res) => {
   const dbUsuario = obtenerDBUsuario(req.usuarioId);
@@ -860,6 +909,161 @@ app.get('/api/resumen-mensual', verificarToken, (req, res) => {
       );
     }
   );
+});
+
+// Resumen mensual público (para el chatbot)
+app.get('/api/resumen-mensual-publico', (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+
+  dbUsers.get('SELECT id FROM sesiones WHERE token = ?', [token], (err, row) => {
+    if (err || !row) {
+      return res.status(401).json({ error: 'Token inválido' });
+    }
+
+    const usuarioId = row.id;
+    const dbUsuario = obtenerDBUsuario(usuarioId);
+    const hoy = new Date();
+    const año = hoy.getFullYear();
+    const mes = hoy.getMonth() + 1;
+    
+    // Ventas del mes actual
+    dbUsuario.get(
+      `SELECT 
+        COUNT(*) as total_ventas,
+        SUM(cantidad) as total_unidades_vendidas,
+        SUM(ganancia_total) as ganancia_total_ventas
+       FROM ventas_ganancias
+       WHERE strftime('%Y-%m', fecha) = ?`,
+      [`${año}-${String(mes).padStart(2, '0')}`],
+      (err, ventasData) => {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        
+        // Entradas (compras) del mes actual
+        dbUsuario.all(
+          `SELECT 
+            m.producto_id,
+            p.nombre,
+            m.cantidad,
+            p.precio_proveedor,
+            m.cantidad * p.precio_proveedor as costo_total
+           FROM movimientos m
+           JOIN productos p ON m.producto_id = p.id
+           WHERE m.tipo = 'entrada' AND strftime('%Y-%m', m.fecha) = ?
+           ORDER BY m.fecha DESC`,
+          [`${año}-${String(mes).padStart(2, '0')}`],
+          (err, compras) => {
+            if (err) {
+              return res.status(500).json({ error: err.message });
+            }
+            
+            // Ventas del mes actual con detalle
+            dbUsuario.all(
+              `SELECT 
+                vg.producto_id,
+                p.nombre,
+                vg.cantidad,
+                vg.ganancia_unitaria,
+                vg.ganancia_total,
+                p.precio_venta,
+                (vg.cantidad * vg.ganancia_unitaria / (vg.ganancia_unitaria + p.precio_proveedor) * p.precio_proveedor) as costo_vendido
+               FROM ventas_ganancias vg
+               JOIN productos p ON vg.producto_id = p.id
+               WHERE strftime('%Y-%m', vg.fecha) = ?
+               ORDER BY vg.fecha DESC`,
+              [`${año}-${String(mes).padStart(2, '0')}`],
+              (err, ventas) => {
+                if (err) {
+                  return res.status(500).json({ error: err.message });
+                }
+                
+                const costoTotalCompras = compras.reduce((acc, c) => acc + (c.costo_total || 0), 0);
+                const ingresosTotalVentas = ventas.reduce((acc, v) => acc + (v.cantidad * v.precio_venta || 0), 0);
+                const gananciaTotal = ventas.reduce((acc, v) => acc + (v.ganancia_total || 0), 0);
+                
+                res.json({
+                  mes: mes,
+                  año: año,
+                  compras: {
+                    total_items: compras.length,
+                    costo_total: costoTotalCompras,
+                    detalle: compras
+                  },
+                  ventas: {
+                    total_transacciones: ventasData.total_ventas || 0,
+                    total_unidades: ventasData.total_unidades_vendidas || 0,
+                    ingresos_total: ingresosTotalVentas,
+                    ganancia_total: gananciaTotal,
+                    detalle: ventas
+                  },
+                  comparativa: {
+                    costo_compras: costoTotalCompras,
+                    ingresos_ventas: ingresosTotalVentas,
+                    ganancia_neta: gananciaTotal,
+                    margen_ganancia_porcentaje: ingresosTotalVentas > 0 ? ((gananciaTotal / ingresosTotalVentas) * 100).toFixed(2) : 0
+                  }
+                });
+              }
+            );
+          }
+        );
+      }
+    );
+  });
+});
+
+// Productos público (para el chatbot)
+app.get('/api/productos-publico', (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+
+  dbUsers.get('SELECT id FROM sesiones WHERE token = ?', [token], (err, row) => {
+    if (err || !row) {
+      return res.status(401).json({ error: 'Token inválido' });
+    }
+
+    const usuarioId = row.id;
+    const dbUsuario = obtenerDBUsuario(usuarioId);
+    
+    dbUsuario.all(
+      `SELECT * FROM productos ORDER BY nombre`,
+      (err, productos) => {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        
+        // Calcular descuentos para productos por vencer
+        const productosConDescuento = productos.map(p => {
+          const dias = calcularDiasRestantes(p.fecha_vencimiento);
+          let descuento = 0;
+          
+          if (dias <= 0) {
+            descuento = 100; // Caducado
+          } else if (dias <= 3) {
+            descuento = 50;
+          } else if (dias <= 7) {
+            descuento = 30;
+          } else if (dias <= 15) {
+            descuento = 10;
+          }
+          
+          return {
+            ...p,
+            descuento: descuento,
+            precio_venta_descuento: descuento > 0 ? p.precio_venta * (1 - descuento / 100) : p.precio_venta
+          };
+        });
+        
+        res.json(productosConDescuento);
+      }
+    );
+  });
 });
 
 // Obtener años disponibles con datos

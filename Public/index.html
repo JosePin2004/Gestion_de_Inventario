@@ -424,11 +424,32 @@
         </div>
     </div>
 
+    <!-- Chatbot Widget -->
+    <div id="chatbot-widget" class="chatbot-widget">
+        <div class="chatbot-header">
+            <h3>💬 Asistente</h3>
+            <button id="chatbot-close-btn" class="chatbot-close-btn">×</button>
+        </div>
+        <div id="chatbot-messages" class="chatbot-messages"></div>
+        
+        <!-- Botones de preguntas frecuentes -->
+        <div id="chatbot-quick-buttons" class="chatbot-quick-buttons"></div>
+        
+        <div class="chatbot-input-container">
+            <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Escribe tu pregunta...">
+            <button id="chatbot-restart-btn" class="chatbot-send-btn" title="Reiniciar chat">🔄</button>
+            <button id="chatbot-send-btn" class="chatbot-send-btn">Enviar</button>
+        </div>
+    </div>
+
+    <button id="chatbot-toggle-btn" class="chatbot-toggle-btn" title="Abrir asistente">💬</button>
+
     <footer class="footer">
         <p>&copy; 2025 Sistema de Gestión de Inventario. Todos los derechos reservados.</p>
     </footer>
 
     <script src="auth.js"></script>
+    <script src="chatbot.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
